@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "node solutions/$DAY/solution.js"
-  },
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "nodemon": "^3.1.7"
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }
