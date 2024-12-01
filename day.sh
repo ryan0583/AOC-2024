@@ -1,0 +1,1 @@
+npx tsx solutions/$1/solution.ts
