@@ -1,7 +1,7 @@
 import path from "path";
 import { readLines } from "../../fileParser.ts";
 import { sum } from "../../arrays.ts";
-import { log } from "console";
+import { log } from "../../logger.ts";
 
 const lines = readLines(path.resolve(), 'solutions/1/input.txt');
 
