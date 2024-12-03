@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-export const readLines = (directory: string, filename: string) => {
-  console.log(directory);
+export const read = (directory: string, filename: string) => {
   const filePath = path.join(directory, filename);
-  const fileContents = fs.readFileSync(filePath, 'utf-8');
-  return fileContents.split(/\r?\n/);
-};
+  return fs.readFileSync(filePath, 'utf-8');
+}
+
+export const readLines = (directory: string, filename: string) => 
+  read(directory, filename).split(/\r?\n/);
