@@ -75,14 +75,9 @@ const fixedOrderUpdates = inWrongOrder.map((update) =>
   update.sort((a, b) => {
     const aAllowedBefore = numbersBeforeMap[a] || [];
     const aAllowedAfter = numbersAfterMap[a] || [];
-    const bAllowedBefore = numbersBeforeMap[b] || [];
-    const bAllowedAfter = numbersAfterMap[b] || [];
 
     if (aAllowedBefore.includes(b)) return -1;
     if (aAllowedAfter.includes(b)) return 1;
-    if (bAllowedBefore.includes(a)) return 1;
-    if (bAllowedAfter.includes(a)) return -1;
-
     return 0;
   })
 );
