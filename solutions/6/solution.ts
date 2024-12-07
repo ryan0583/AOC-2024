@@ -6,82 +6,106 @@ const lines = readLines(path.resolve(), 'solutions/6/input.txt');
 
 const maxY = lines.length - 1;
 const maxX = lines[0].length - 1;
+const startChar = '^';
 
-const startY = lines.findIndex((line) => line.includes('^'));
-const startX = lines[startY].indexOf('^');
+type Direction = { x: number; y: number };
 
-let direction = [0, -1]; //Checked input and it always starts with a ^
-let currentPosition = `${startX}, ${startY}`;
-let visitedPositions = new Set([currentPosition]);
+type CurrentPosition = {
+  x: number;
+  y: number;
+  direction: Direction;
+};
 
-while (true) {
-  const [currentX, currentY] = currentPosition.split(', ').map(Number);
+const getNextChar = ({ x, y, direction }: CurrentPosition) =>
+  lines[y + direction.y]?.[x + direction.x] || '.';
 
-  const nextChar =
-    lines[currentY + direction[1]]?.[currentX + direction[0]] || '.';
+const getNextPosition = ({ x, y, direction }: CurrentPosition) =>
+  `${x + direction.x}, ${y + direction.y}`;
 
-  if (nextChar === '#') direction = [-direction[1], direction[0]]; // Turn right
+const turnRight = ({ direction }: { direction: Direction }) => ({
+  x: -direction.y,
+  y: direction.x,
+});
 
-  const nextX = currentX + direction[0];
-  const nextY = currentY + direction[1];
+const startY = lines.findIndex((line) => line.includes(startChar));
+const startX = lines[startY].indexOf(startChar);
 
-  if (nextX < 0 || nextX > maxX || nextY < 0 || nextY > maxY) {
-    break;
+const initCurrentPositionsAndVisitedPositions = () => {
+  const currentPosition = {
+    x: startX,
+    y: startY,
+    direction: {
+      x: 0,
+      y: -1,
+    }, //Checked input and it always starts with a ^
+  };
+  return {
+    currentPosition,
+    visitedPositions: new Set([`${currentPosition.x}, ${currentPosition.y}`]),
+  };
+};
+
+const isOnGrid = ({ x, y }: CurrentPosition) =>
+  x >= 0 && x <= maxX && y >= 0 && y <= maxY;
+
+const getVisitedPositions = () => {
+  const { currentPosition, visitedPositions } =
+    initCurrentPositionsAndVisitedPositions();
+
+  while (isOnGrid(currentPosition)) {
+    visitedPositions.add(`${currentPosition.x}, ${currentPosition.y}`);
+
+    const nextChar = getNextChar(currentPosition);
+    if (nextChar === '#')
+      currentPosition.direction = turnRight(currentPosition);
+
+    currentPosition.x = currentPosition.x + currentPosition.direction.x;
+    currentPosition.y = currentPosition.y + currentPosition.direction.y;
   }
+  return visitedPositions;
+};
 
-  currentPosition = `${currentX + direction[0]}, ${currentY + direction[1]}`;
-  visitedPositions.add(currentPosition);
-}
+log(getVisitedPositions().size);
 
-log(visitedPositions.size);
+const loopLocations = [...getVisitedPositions()].filter((position) => {
+  const { currentPosition, visitedPositions } =
+    initCurrentPositionsAndVisitedPositions();
 
-const loopLocations = [...visitedPositions].filter((position, index) => {
-  log(index);
-  currentPosition = `${startX}, ${startY}`;
-  visitedPositions = new Set([currentPosition]);
-  direction = [0, -1];
   const positionDirections = {
-    [currentPosition]: new Set([`${direction[0]}, ${direction[1]}`]),
+    [`${currentPosition.x}, ${currentPosition.y}`]: new Set([
+      `${currentPosition.direction.x}, ${currentPosition.direction.y}`,
+    ]),
   };
 
   let inLoop = false;
-  while (true) {
-    const [currentX, currentY] = currentPosition.split(', ').map(Number);
 
-    let nextChar =
-      lines[currentY + direction[1]]?.[currentX + direction[0]] || '.';
-
-    let nextPosition = `${currentX + direction[0]}, ${currentY + direction[1]}`;
+  while (!inLoop && isOnGrid(currentPosition)) {
+    let nextChar = getNextChar(currentPosition);
+    let nextPosition = getNextPosition(currentPosition);
 
     while (nextChar === '#' || nextPosition === position) {
-      direction = [-direction[1], direction[0]]; // Turn right
-      nextChar =
-        lines[currentY + direction[1]]?.[currentX + direction[0]] || '.';
-      nextPosition = `${currentX + direction[0]}, ${currentY + direction[1]}`;
+      currentPosition.direction = turnRight(currentPosition);
+      nextChar = getNextChar(currentPosition);
+      nextPosition = getNextPosition(currentPosition);
     }
 
-    const nextX = currentX + direction[0];
-    const nextY = currentY + direction[1];
+    currentPosition.x = currentPosition.x + currentPosition.direction.x;
+    currentPosition.y = currentPosition.y + currentPosition.direction.y;
+    const positionLookup = `${currentPosition.x}, ${currentPosition.y}`;
+    const directionLookup = `${currentPosition.direction.x}, ${currentPosition.direction.y}`;
 
-    if (nextX < 0 || nextX > maxX || nextY < 0 || nextY > maxY) {
-      break;
-    }
-
-    currentPosition = `${currentX + direction[0]}, ${currentY + direction[1]}`;
     if (
-      visitedPositions.has(currentPosition) &&
-      positionDirections[currentPosition].has(
-        `${direction[0]}, ${direction[1]}`
-      )
-    ) {
+      visitedPositions.has(positionLookup) &&
+      positionDirections[positionLookup].has(directionLookup)
+    )
       inLoop = true;
-      break;
-    }
-    visitedPositions.add(currentPosition);
-    if (!positionDirections[currentPosition])
-      positionDirections[currentPosition] = new Set();
-    positionDirections[currentPosition].add(`${direction[0]}, ${direction[1]}`);
+
+    if (!positionDirections[positionLookup])
+      positionDirections[positionLookup] = new Set();
+    positionDirections[positionLookup].add(directionLookup);
+    visitedPositions.add(`${currentPosition.x}, ${currentPosition.y}`);
   }
+
   return inLoop;
 });
 
