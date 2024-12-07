@@ -7,6 +7,7 @@ const lines = readLines(path.resolve(), 'solutions/6/input.txt');
 const maxY = lines.length - 1;
 const maxX = lines[0].length - 1;
 const startChar = '^';
+const blockChar = '#';
 
 type Direction = { x: number; y: number };
 
@@ -55,9 +56,11 @@ const getVisitedPositions = () => {
   while (isOnGrid(currentPosition)) {
     visitedPositions.add(`${currentPosition.x}, ${currentPosition.y}`);
 
-    const nextChar = getNextChar(currentPosition);
-    if (nextChar === '#')
+    let nextChar = getNextChar(currentPosition);
+    while (nextChar === blockChar) {
       currentPosition.direction = turnRight(currentPosition);
+      nextChar = getNextChar(currentPosition);
+    }
 
     currentPosition.x = currentPosition.x + currentPosition.direction.x;
     currentPosition.y = currentPosition.y + currentPosition.direction.y;
@@ -65,16 +68,16 @@ const getVisitedPositions = () => {
   return visitedPositions;
 };
 
-log(getVisitedPositions().size);
+const distinctVisitedPositions = getVisitedPositions();
 
-const loopLocations = [...getVisitedPositions()].filter((position) => {
+log(distinctVisitedPositions.size);
+
+const loopLocations = [...distinctVisitedPositions].filter((position) => {
   const { currentPosition, visitedPositions } =
     initCurrentPositionsAndVisitedPositions();
 
   const positionDirections = {
-    [`${currentPosition.x}, ${currentPosition.y}`]: new Set([
-      `${currentPosition.direction.x}, ${currentPosition.direction.y}`,
-    ]),
+    [`${currentPosition.x}, ${currentPosition.y}`]: `${currentPosition.direction.x}, ${currentPosition.direction.y}`,
   };
 
   let inLoop = false;
@@ -83,7 +86,7 @@ const loopLocations = [...getVisitedPositions()].filter((position) => {
     let nextChar = getNextChar(currentPosition);
     let nextPosition = getNextPosition(currentPosition);
 
-    while (nextChar === '#' || nextPosition === position) {
+    while (nextChar === blockChar || nextPosition === position) {
       currentPosition.direction = turnRight(currentPosition);
       nextChar = getNextChar(currentPosition);
       nextPosition = getNextPosition(currentPosition);
@@ -96,14 +99,12 @@ const loopLocations = [...getVisitedPositions()].filter((position) => {
 
     if (
       visitedPositions.has(positionLookup) &&
-      positionDirections[positionLookup].has(directionLookup)
+      positionDirections[positionLookup] === directionLookup
     )
       inLoop = true;
 
-    if (!positionDirections[positionLookup])
-      positionDirections[positionLookup] = new Set();
-    positionDirections[positionLookup].add(directionLookup);
-    visitedPositions.add(`${currentPosition.x}, ${currentPosition.y}`);
+    positionDirections[positionLookup] = directionLookup;
+    visitedPositions.add(positionLookup);
   }
 
   return inLoop;

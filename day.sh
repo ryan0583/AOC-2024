@@ -1,1 +1,1 @@
-npx tsx solutions/$1/solution.ts
+time -f "%U seconds" npx tsx solutions/$1/solution.ts
