@@ -1,6 +1,7 @@
 import path from 'path';
 import { readLines } from '../../fileParser';
 import { log } from 'console';
+import { CurrentPosition, Direction } from '../../types';
 
 const lines = readLines(path.resolve(), 'solutions/6/input.txt');
 
@@ -8,14 +9,6 @@ const maxY = lines.length - 1;
 const maxX = lines[0].length - 1;
 const startChar = '^';
 const blockChar = '#';
-
-type Direction = { x: number; y: number };
-
-type CurrentPosition = {
-  x: number;
-  y: number;
-  direction: Direction;
-};
 
 const getNextChar = ({ x, y, direction }: CurrentPosition) =>
   lines[y + direction.y]?.[x + direction.x] || '.';

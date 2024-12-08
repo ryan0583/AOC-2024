@@ -1,6 +1,7 @@
 import path from 'path';
 import { readLines } from '../../fileParser';
 import { log } from 'console';
+import { Position } from '../../types';
 
 const lines = readLines(path.resolve(), 'solutions/8/input.txt');
 
@@ -21,69 +22,107 @@ for (let y = 0; y <= maxY; y++) {
   }
 }
 
-const antinodePositions = [
-  ...new Set(
-    Object.values(antennaPositionsLookup)
-      .flatMap((positions) => {
-        const antinodePositions = [] as { x: number; y: number }[];
-        for (let i = 0; i < positions.length; i++) {
-          const firstNode = positions[i];
-          for (let j = i + 1; j < positions.length; j++) {
-            const secondNode = positions[j];
-            const xDiff = secondNode.x - firstNode.x;
-            const yDiff = secondNode.y - firstNode.y;
-            const firstAntinode = {
-              x: firstNode.x - xDiff,
-              y: firstNode.y - yDiff,
-            };
-            const secondAntinode = {
-              x: secondNode.x + xDiff,
-              y: secondNode.y + yDiff,
-            };
-            antinodePositions.push(firstAntinode, secondAntinode);
-          }
-        }
-        return antinodePositions;
-      })
-      .filter(({ x, y }) => x >= 0 && x <= maxX && y >= 0 && y <= maxY)
-      .map(({ x, y }) => `${x},${y}`)
-  ),
-];
+const xOnGrid = (x: number) => x >= 0 && x <= maxX;
+const yOnGrid = (y: number) => y >= 0 && y <= maxY;
+
+const distinctPositionsOnGrid = (arr: string[]) => [...new Set(arr)];
+
+const getAntinodePositions = (
+  getNewAntinodes: (
+    firstNode: Position,
+    secondNode: Position,
+    xDiff: number,
+    yDiff: number
+  ) => string[]
+) =>
+  Object.values(antennaPositionsLookup).flatMap((positions) => {
+    const antinodePositions = [] as string[];
+    for (let i = 0; i < positions.length; i++) {
+      const firstNode = positions[i];
+      for (let j = i + 1; j < positions.length; j++) {
+        const secondNode = positions[j];
+        antinodePositions.push(
+          ...getNewAntinodes(
+            firstNode,
+            secondNode,
+            secondNode.x - firstNode.x,
+            secondNode.y - firstNode.y
+          )
+        );
+      }
+    }
+    return antinodePositions;
+  });
+
+const antinodePositions = distinctPositionsOnGrid(
+  getAntinodePositions(
+    (
+      firstNode: Position,
+      secondNode: Position,
+      xDiff: number,
+      yDiff: number
+    ) => {
+      const aboveAntinodeX = firstNode.x - xDiff;
+      const aboveAntinodeY = firstNode.y - yDiff;
+      const aboveAntinode =
+        xOnGrid(aboveAntinodeX) && yOnGrid(aboveAntinodeY)
+          ? [`${aboveAntinodeX},${aboveAntinodeY}`]
+          : [];
+
+      const belowAntinodeX = secondNode.x + xDiff;
+      const belowAntinodeY = secondNode.y + yDiff;
+      const belowAntinode =
+        xOnGrid(belowAntinodeX) && yOnGrid(belowAntinodeY)
+          ? [`${belowAntinodeX},${belowAntinodeY}`]
+          : [];
+
+      return [...aboveAntinode, ...belowAntinode];
+    }
+  )
+);
 
 log(antinodePositions.length);
 
-const antinodePositionsPt2 = [
-  ...new Set(
-    Object.values(antennaPositionsLookup)
-      .flatMap((positions) => {
-        const antinodePositions = [] as { x: number; y: number }[];
-        for (let i = 0; i < positions.length; i++) {
-          const firstNode = positions[i];
-          for (let j = i + 1; j < positions.length; j++) {
-            const secondNode = positions[j];
-            const xDiff = secondNode.x - firstNode.x;
-            const yDiff = secondNode.y - firstNode.y;
-            let multiplier = 1;
-            antinodePositions.push(firstNode, secondNode);
-            while (multiplier < maxX || multiplier < maxY) {
-              const firstAntinode = {
-                x: firstNode.x - multiplier * xDiff,
-                y: firstNode.y - multiplier * yDiff,
-              };
-              const secondAntinode = {
-                x: secondNode.x + multiplier * xDiff,
-                y: secondNode.y + multiplier * yDiff,
-              };
-              antinodePositions.push(firstAntinode, secondAntinode);
-              multiplier++;
-            }
+const antinodePositionsPt2 = distinctPositionsOnGrid(
+  getAntinodePositions(
+    (
+      firstNode: Position,
+      secondNode: Position,
+      xDiff: number,
+      yDiff: number
+    ) => {
+      const antinodePositions = [] as string[];
+      let multiplier = 1;
+      let aboveNodeOnGrid = true;
+      let belowNodeOnGrid = true;
+      antinodePositions.push(
+        `${firstNode.x},${firstNode.y}`,
+        `${secondNode.x},${secondNode.y}`
+      );
+      while (aboveNodeOnGrid || belowNodeOnGrid) {
+        if (aboveNodeOnGrid) {
+          const newX = firstNode.x - multiplier * xDiff;
+          const newY = firstNode.y - multiplier * yDiff;
+          if (xOnGrid(newX) && yOnGrid(newY)) {
+            antinodePositions.push(`${newX},${newY}`);
+          } else {
+            aboveNodeOnGrid = false;
           }
         }
-        return antinodePositions;
-      })
-      .filter(({ x, y }) => x >= 0 && x <= maxX && y >= 0 && y <= maxY)
-      .map(({ x, y }) => `${x},${y}`)
-  ),
-];
+        if (belowNodeOnGrid) {
+          const newX = secondNode.x + multiplier * xDiff;
+          const newY = secondNode.y + multiplier * yDiff;
+          if (xOnGrid(newX) && yOnGrid(newY)) {
+            antinodePositions.push(`${newX},${newY}`);
+          } else {
+            belowNodeOnGrid = false;
+          }
+        }
+        multiplier++;
+      }
+      return antinodePositions;
+    }
+  )
+);
 
 log(antinodePositionsPt2.length);
