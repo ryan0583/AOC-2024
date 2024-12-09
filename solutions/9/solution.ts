@@ -14,22 +14,21 @@ const filesAndSpaces = lines[0].split('').flatMap((c, index) => {
   return arr;
 });
 
-// const originalLength = filesAndSpaces.filter(c => c === '.').length;
-// for (let i=0; i<originalLength; i++) {
-//     const char = filesAndSpaces.pop() as string;
-//     if (char !== '.') {
-//         const dotIndex = filesAndSpaces.indexOf('.');
-//         filesAndSpaces[dotIndex] = char;
-//     }
-// }
+const filesAndSpacesPt1 = [...filesAndSpaces]
+const originalLength = filesAndSpacesPt1.filter(c => c === '.').length;
+for (let i=0; i<originalLength; i++) {
+    const char = filesAndSpacesPt1.pop() as string;
+    if (char !== '.') {
+        const dotIndex = filesAndSpacesPt1.indexOf('.');
+        filesAndSpacesPt1[dotIndex] = char;
+    }
+}
 
-// log(sum(filesAndSpaces.map((c, index) => Number(c) * index)));
+log(sum(filesAndSpacesPt1.map((c, index) => Number(c) * index)));
 
-// log(filesAndSpaces.join(''));
 let fileId = Math.max(
   ...filesAndSpaces.filter((c) => c !== '.').map((c) => parseInt(c))
 );
-// log(fileId);
 
 while (fileId >= 0) {
   log(fileId);
@@ -45,18 +44,24 @@ while (fileId >= 0) {
   }
   const fileLength = blocksToMove.length;
   const emptyBlockArr = new Array(fileLength).fill('.');
-  const emptyBlock = emptyBlockArr.join('');
-  const filesAndSpacesStr = filesAndSpaces.join('');
-  const emptyBlockIndex = filesAndSpacesStr.indexOf(emptyBlock);
-  if (emptyBlockIndex >= 0 && emptyBlockIndex < lastFileIdIndex) {
-    filesAndSpaces.splice(
-      lastFileIdIndex - fileLength + 1,
-      fileLength,
-      ...emptyBlockArr
-    );
-    filesAndSpaces.splice(emptyBlockIndex, fileLength, ...blocksToMove);
+  const emptyBlock = emptyBlockArr.join(',');
+  const filesAndSpacesStr = filesAndSpaces.join(',');
+  const emptyBlockStringIndex = filesAndSpacesStr.indexOf(emptyBlock);
+
+  if (emptyBlockStringIndex >= 0) {
+    const emptyBlockArrayIndex = filesAndSpacesStr
+      .slice(0, emptyBlockStringIndex)
+      .split('')
+      .filter((c) => c === ',').length;
+    if (emptyBlockArrayIndex < lastFileIdIndex) {
+      filesAndSpaces.splice(
+        lastFileIdIndex - fileLength + 1,
+        fileLength,
+        ...emptyBlockArr
+      );
+      filesAndSpaces.splice(emptyBlockArrayIndex, fileLength, ...blocksToMove);
+    }
   }
-  //   log(filesAndSpaces.join(''));
   fileId--;
 }
 
