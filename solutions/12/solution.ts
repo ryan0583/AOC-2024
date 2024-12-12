@@ -25,10 +25,8 @@ const appendConnectedPoints = (
   { x, y }: Position,
   plantType: string,
   region: Position[]
-) => {
-  let revisedRegion = region;
-
-  checkArr.forEach(([dx, dy]) => {
+) =>
+  checkArr.reduce((revisedRegion, [dx, dy]) => {
     const newX = x + dx;
     const newY = y + dy;
     if (
@@ -41,10 +39,8 @@ const appendConnectedPoints = (
         { x: newX, y: newY },
       ]);
     }
-  });
-
-  return revisedRegion;
-};
+    return revisedRegion;
+  }, region);
 
 for (let y = 0; y < lines.length; y++) {
   for (let x = 0; x < lines[y].length; x++) {
@@ -68,73 +64,48 @@ for (let y = 0; y < lines.length; y++) {
   }
 }
 
-const getPerimeterPoints = (region: Position[]) => {
-  const perimeterPoints = [] as Position[];
-  region.map(({ x, y }) => {
-    if (!region.some(({ x: rx, y: ry }) => rx === x - 1 && ry === y)) {
-      perimeterPoints.push({ x: x - 1, y });
-    }
-    if (!region.some(({ x: rx, y: ry }) => rx === x + 1 && ry === y)) {
-      perimeterPoints.push({ x: x + 1, y });
-    }
-    if (!region.some(({ x: rx, y: ry }) => rx === x && ry === y - 1)) {
-      perimeterPoints.push({ x, y: y - 1 });
-    }
-    if (!region.some(({ x: rx, y: ry }) => rx === x && ry === y + 1)) {
-      perimeterPoints.push({ x, y: y + 1 });
-    }
-  });
-  return perimeterPoints;
-};
-
-const calculatePerimeter = (region: Position[]) =>
-  getPerimeterPoints(region).length;
+const getPerimeterPoints = (region: Position[]) =>
+  region.reduce<Position[]>(
+    (perimeterPoints, { x, y }) =>
+      checkArr.reduce((checkPerimeterPoints, [dx, dy]) => {
+        if (!region.some(({ x: rx, y: ry }) => rx === x + dx && ry === y + dy))
+          checkPerimeterPoints.push({ x: x + 0.25 * dx, y: y + 0.25 * dy });
+        return checkPerimeterPoints;
+      }, perimeterPoints),
+    []
+  );
 
 log(
   sum(
-    Object.entries(plantTypeRegionsMapping).flatMap(([k, v]) =>
-      v.map((region) => {
+    Object.values(plantTypeRegionsMapping).flatMap((value) =>
+      value.map((region) => {
         const area = region.length;
-        const perimeter = calculatePerimeter(region);
+        const perimeter = getPerimeterPoints(region).length;
         return area * perimeter;
       })
     )
   )
 );
 
-const calculateSides = (region: Position[]) => {
-  const perimeterPoints = getPerimeterPoints(region);
-
-  const sides = [] as Position[][];
-  perimeterPoints.sort((a, b) => a.y < b.y || (a.y === b.y && a.x < b.x) ? -1 : 1 ).forEach(({ x, y }) => {
-    const existingSide = sides.find(
-      (side) =>
-        !side.some(({ x: sx, y: sy }) => sx === x && sy === y) &&
-        ((side.every(({ x: sx }) => sx === x) &&
-          side.find(
-            ({ x: sx, y: sy }) =>
-              (sx === x && sy === y - 1)
-          )) ||
-          (side.every(({ y: sy }) => sy === y) &&
-            side.find(
-              ({ x: sx, y: sy }) =>
-                (sx === x - 1 && sy === y)
-            )))
-    );
-    if (existingSide) {
-      existingSide.push({ x, y });
-    } else {
-      sides.push([{ x, y }]);
-    }
-  });
-
-  return sides.length;
-};
+const calculateSides = (region: Position[]) =>
+  getPerimeterPoints(region)
+    .sort((a, b) => (a.y < b.y || (a.y === b.y && a.x < b.x) ? -1 : 1))
+    .reduce<Position[][]>((sides, { x, y }) => {
+      const existingSide = sides.find((side) =>
+        side.find(
+          ({ x: sx, y: sy }) =>
+            (sx === x && sy === y - 1) || (sx === x - 1 && sy === y)
+        )
+      );
+      if (existingSide) existingSide.push({ x, y });
+      else sides.push([{ x, y }]);
+      return sides;
+    }, []).length;
 
 log(
   sum(
-    Object.entries(plantTypeRegionsMapping).flatMap(([k, v]) =>
-      v.map((region) => {
+    Object.values(plantTypeRegionsMapping).flatMap((value) =>
+      value.map((region) => {
         const area = region.length;
         const sides = calculateSides(region);
         return area * sides;
