@@ -2,6 +2,7 @@ import path from 'path';
 import { readLines } from '../../fileParser';
 import { log } from 'console';
 import { sum } from '../../arrays';
+import { Position } from '../../types';
 
 const lines = readLines(path.resolve(), 'solutions/13/input.txt')
   .join(';')
@@ -21,28 +22,66 @@ const lines = readLines(path.resolve(), 'solutions/13/input.txt')
     return {
       A: { x: Number(buttonAX), y: Number(buttonAY) },
       B: { x: Number(buttonBX), y: Number(buttonBY) },
-      prize: { x: Number(prizeX), y: Number(prizeY) },
+      prize: {
+        x: Number(prizeX),
+        y: Number(prizeY),
+      },
     };
   });
 
-const minCosts = [] as number[];
+const solveSimultaneousEquations = (
+  x1: number,
+  x2: number,
+  xT: number,
+  y1: number,
+  y2: number,
+  yT: number
+) => {
+  // Multiply coefficients of equation 1 by y2
+  const adjustedX1 = x1 * y2;
+  const adjustedXT = xT * y2;
 
-lines.forEach(({ A, B, prize }) => {
-  const possibleButtonPressCombos = [] as number[][];
+  // Multiply coefficients of equation 2 by x2
+  const adjustedY1 = y1 * x2;
+  const adjustedYT = yT * x2;
 
-  for (let a = 0; a <= 100; a++) {
-    for (let b = 0; b < 100; b++) {
-      if (a * A.x + b * B.x === prize.x && a * A.y + b * B.y === prize.y) {
-        possibleButtonPressCombos.push([a, b]);
-      }
-    }
-  }
+  // Find a by subtracting equation 2 from equation 1 (this eliminates b)
+  const a = (adjustedXT - adjustedYT) / (adjustedX1 - adjustedY1);
 
-  minCosts.push(
-    possibleButtonPressCombos.length
-      ? Math.min(...possibleButtonPressCombos.map(([a, b]) => 3 * a + b))
-      : 0
+  // Find b by substituting a into equation 1
+  const b = (xT - a * x1) / x2;
+
+  return [a, b];
+};
+
+const findCosts = (
+  linesToCheck: { A: Position; B: Position; prize: Position }[]
+) =>
+  sum(
+    linesToCheck.map(({ A, B, prize }) => {
+      const solution = solveSimultaneousEquations(
+        A.x,
+        B.x,
+        prize.x,
+        A.y,
+        B.y,
+        prize.y
+      );
+
+      return Number.isInteger(solution[0]) && Number.isInteger(solution[1])
+        ? 3 * solution[0] + solution[1]
+        : 0;
+    })
   );
-});
 
-log(sum(minCosts));
+log(findCosts(lines));
+
+log(
+  findCosts(
+    lines.map(({ A, B, prize }) => ({
+      A,
+      B,
+      prize: { x: prize.x + 10000000000000, y: prize.y + 10000000000000 },
+    }))
+  )
+);
