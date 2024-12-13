@@ -81,7 +81,7 @@ log(
       value.map((region) => {
         const area = region.length;
         const perimeter = getPerimeterPoints(region).length;
-        return area * perimeter;
+        return perimeter;
       })
     )
   )
@@ -108,7 +108,7 @@ log(
       value.map((region) => {
         const area = region.length;
         const sides = calculateSides(region);
-        return area * sides;
+        return sides;
       })
     )
   )
