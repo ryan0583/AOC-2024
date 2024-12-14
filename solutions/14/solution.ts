@@ -1,8 +1,9 @@
 import path from 'path';
 import { readLines } from '../../fileParser';
-import { log } from 'console';
 import fs from 'fs';
 import { PositionAndVelocity } from '../../types';
+import { log } from '../../logger';
+import { printGridToConsole, writeGridToFile } from '../../grid';
 
 const gridWidth = 101;
 const gridHeight = 103;
@@ -35,17 +36,20 @@ const parsedRobotInfos = readLines(
 
 const robotInfosPt1Copy = JSON.parse(JSON.stringify(parsedRobotInfos));
 
-const moveRobots = (robotInfos: PositionAndVelocity[]) => {
+const moveRobots = (robotInfos: PositionAndVelocity[], forwards = true) => {
   robotInfos.forEach((robotInfo) => {
-    robotInfo.position.x = robotInfo.position.x + robotInfo.velocity.x;
+    robotInfo.position.x = forwards
+      ? robotInfo.position.x + robotInfo.velocity.x
+      : robotInfo.position.x - robotInfo.velocity.x;
     robotInfo.position.x =
       robotInfo.position.x < 0
         ? gridWidth + robotInfo.position.x
         : robotInfo.position.x;
     robotInfo.position.x = robotInfo.position.x % gridWidth;
 
-    robotInfo.position.y =
-      (robotInfo.position.y + robotInfo.velocity.y) % gridHeight;
+    robotInfo.position.y = forwards
+      ? robotInfo.position.y + robotInfo.velocity.y
+      : robotInfo.position.y - robotInfo.velocity.y;
     robotInfo.position.y =
       robotInfo.position.y < 0
         ? gridHeight + robotInfo.position.y
@@ -87,12 +91,11 @@ const quadrant4RobotCount = remainingRobotInfos.filter(
     robotInfo.position.x > gridXMidPoint && robotInfo.position.y > gridYMidPoint
 ).length;
 
-log(
+const pt1Answer =
   quadrant1RobotCount *
-    quadrant2RobotCount *
-    quadrant3RobotCount *
-    quadrant4RobotCount
-);
+  quadrant2RobotCount *
+  quadrant3RobotCount *
+  quadrant4RobotCount;
 
 // Part 2
 const robotInfosPt2Copy = JSON.parse(JSON.stringify(parsedRobotInfos));
@@ -108,35 +111,23 @@ const allRobotsUniquelyPositioned = (robotInfos: PositionAndVelocity) =>
       )
   );
 
-const printGrid = (seconds: number) => {
-  const myConsole = new console.Console(
-    fs.createWriteStream(`${gridDirectory}/${seconds}.txt`)
-  );
-  for (let y = 0; y < gridHeight; y++) {
-    const line = [] as string[];
-    for (let x = 0; x < gridWidth; x++) {
-      const robotInfo = robotInfosPt2Copy.find(
-        (robotInfo) => robotInfo.position.x === x && robotInfo.position.y === y
-      );
-      if (robotInfo) {
-        line.push('#');
-      } else {
-        line.push('.');
-      }
-    }
-    myConsole.log(line.join(''));
-  }
-};
-
 let seconds = 0;
 while (true) {
   seconds++;
   moveRobots(robotInfosPt2Copy);
 
+  if (seconds > 6600)
+    await printGridToConsole(
+      gridHeight,
+      gridWidth,
+      robotInfosPt2Copy.map((robotInfo) => robotInfo.position)
+    );
+
   if (allRobotsUniquelyPositioned(robotInfosPt2Copy)) {
-    printGrid(seconds);
+    writeGridToFile(gridDirectory, `${seconds}`, gridHeight, gridWidth);
     break;
   }
 }
 
+log(pt1Answer);
 log(seconds);
